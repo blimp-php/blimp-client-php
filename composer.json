@@ -1,0 +1,29 @@
+{
+    "name": "blimp/blimp-client-php",
+    "description": "Blimp PHP Client",
+    "keywords": ["blimp", "client"],
+    "type": "library",
+    "homepage": "https://github.com/nantunes",
+    "license": "GPL",
+    "authors": [
+    {
+        "name": "Nelson Antunes",
+        "email": "nelson.antunes@gmail.com",
+        "homepage": "http://nantunes.net/"
+    }
+    ],
+    "require": {
+        "php": ">=5.4.0",
+        "guzzlehttp/guzzle": ">=5.0@dev"
+    },
+    "autoload": {
+        "psr-4": {
+            "Blimp\\Client\\": "src"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0-dev"
+        }
+    }
+}
