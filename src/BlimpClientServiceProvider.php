@@ -4,22 +4,24 @@ namespace Blimp\Client;
 use Pimple\Container;
 use Pimple\ServiceProviderInterface;
 
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
+
 use GuzzleHttp\Client;
 
 class BlimpClientServiceProvider implements ServiceProviderInterface {
     public function register(Container $api) {
         $api['client.backend_url'] = '';
-        $api['client.authorization_endpoint'] = '';
-        $api['client.token_endpoint'] = '';
-        $api['client.code_endpoint'] = '';
-        $api['client.verify_endpoint'] = '';
+        $api['client.client_id'] = '';
+        $api['client.client_secret'] = null;
+        $api['client.redirect_uri'] = '';
+        $api['client.scope'] = null;
+
+        $api['client.authorization_endpoint'] = '/oauth/authorize';
+        $api['client.token_endpoint'] = '/oauth/token';
+        $api['client.code_endpoint'] = '/oauth/code';
+        $api['client.verify_endpoint'] = '/oauth/verify-credentials';
 
         $api['client.certificate'] = true;
-
-        $api['client.client_id'] = '';
-        $api['client.client_secret'] = '';
-        $api['client.redirect_uri'] = '';
-        $api['client.scope'] = '';
 
         $api['client.http_client'] = function () {
             return new Client();
@@ -37,12 +39,21 @@ class BlimpClientServiceProvider implements ServiceProviderInterface {
             $state = $api['client.random'](16);
             $api['http.session']->set('state_'.$state, $context);
             $params = array(
-              'response_type' => 'code',
-              'client_id' => $api['client.client_id'],
-              'redirect_uri' => $api['client.redirect_uri'],
               'state' => $state,
-              'scope' => $api['client.scope']
+              'response_type' => 'code',
+              'client_id' => $api['client.client_id']
             );
+
+            $redirect_uri = $api['client.redirect_uri'];
+            if (parse_url($redirect_uri, PHP_URL_SCHEME) === null) {
+                $redirect_uri = $redirect_uri;
+            }
+
+            $params['redirect_uri'] = $redirect_uri;
+
+            if (!empty($api['client.scope'])) {
+                $params['scope'] = $api['client.scope'];
+            }
 
             if (!empty($error)) {
                 $params['error'] = $error;
@@ -255,6 +266,93 @@ class BlimpClientServiceProvider implements ServiceProviderInterface {
             }
 
             return bin2hex(substr($buf, 0, $bytes));
+        });
+
+
+        $api->extend('blimp.extend', function ($status, $api) {
+            if($status) {
+                if ($api->offsetExists('config.root')) {
+                    $api->extend('config.root', function ($root, $api) {
+                        $tb = new TreeBuilder();
+
+                        $rootNode = $tb->root('blimp_client');
+
+                        $rootNode
+                            ->canBeEnabled()
+                            ->children()
+                                ->scalarNode('backend_url')->cannotBeEmpty()->end()
+                                ->scalarNode('client_id')->cannotBeEmpty()->end()
+                                ->scalarNode('client_secret')->end()
+                                ->scalarNode('redirect_uri')->end()
+                                ->scalarNode('scope')->cannotBeEmpty()->end()
+
+                                ->variableNode('certificate')->defaultValue(true)->end()
+
+                                ->scalarNode('authorization_endpoint')->end()
+                                ->scalarNode('token_endpoint')->end()
+                                ->scalarNode('code_endpoint')->end()
+                                ->scalarNode('verify_endpoint')->end()
+                            ->end()
+                        ;
+
+                        $root->append($rootNode);
+
+                        return $root;
+                    });
+                }
+            }
+
+            $api->extend('blimp.init', function ($status, $api) {
+                if ($status) {
+                    if ($api->offsetExists('config')) {
+                        if($api['config']['blimp_client']['enabled']) {
+                            $client_config = $api['config']['blimp_client'];
+
+                            $api['client.backend_url'] = $client_config['backend_url'];
+                            $api['client.client_id'] = $client_config['client_id'];
+                            if(array_key_exists('client_secret', $client_config) && !empty($client_config['client_secret'])) {
+                                $api['client.client_secret'] = $client_config['client_secret'];
+                            } else {
+                                $api['client.client_secret'] = null;
+                            }
+                            if(array_key_exists('redirect_uri', $client_config)) {
+                                $api['client.redirect_uri'] = $client_config['redirect_uri'];
+                            } else {
+                                $api['client.redirect_uri'] = '';
+                            }
+                            if(array_key_exists('scope', $client_config) && !empty($client_config['scope'])) {
+                                $api['client.scope'] = $client_config['scope'];
+                            } else {
+                                $api['client.scope'] = null;
+                            }
+
+                            if(array_key_exists('certificate', $client_config)) {
+                                $api['client.certificate'] = $client_config['certificate'];
+                            }
+
+                            if(array_key_exists('authorization_endpoint', $client_config)) {
+                                $api['client.authorization_endpoint'] = $client_config['authorization_endpoint'];
+                            }
+
+                            if(array_key_exists('token_endpoint', $client_config)) {
+                                $api['client.token_endpoint'] = $client_config['token_endpoint'];
+                            }
+
+                            if(array_key_exists('code_endpoint', $client_config)) {
+                                $api['client.code_endpoint'] = $client_config['code_endpoint'];
+                            }
+
+                            if(array_key_exists('verify_endpoint', $client_config)) {
+                                $api['client.verify_endpoint'] = $client_config['verify_endpoint'];
+                            }
+                        }
+                    }
+                }
+
+                return $status;
+            });
+
+            return $status;
         });
     }
 }
