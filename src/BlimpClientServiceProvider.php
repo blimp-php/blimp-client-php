@@ -152,11 +152,11 @@ class BlimpClientServiceProvider implements ServiceProviderInterface {
             $headers['User-Agent'] = 'blimp-client-php';
             $headers['Accept-Encoding'] = '*';
 
-            if (!empty($auth)) {
+            if (empty($auth)) {
                 $access_token = $api['client.access_token']();
 
                 if (!empty($access_token)) {
-                    $headers['Authorization'] = $access_token['type'] . ' ' . $access_token['access_token'];
+                    $headers['Authorization'] = $access_token['token_type'] . ' ' . $access_token['access_token'];
 
                     $client_secret = $api['client.client_secret'];
                     if (!empty($client_secret)) {
@@ -186,6 +186,8 @@ class BlimpClientServiceProvider implements ServiceProviderInterface {
             if (!empty($auth)) {
                 $options['auth'] = $auth;
             }
+
+            // $options['debug'] = true;
 
             $cert = $api['client.certificate'];
             if (!empty($cert)) {
