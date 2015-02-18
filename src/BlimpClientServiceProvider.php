@@ -66,7 +66,7 @@ class BlimpClientServiceProvider implements ServiceProviderInterface {
             return $api['client.backend_url'] . $api['client.authorization_endpoint'] . '?' . http_build_query($params, null, '&');
         });
 
-        $api['client.session_from_code'] = $api->protect(function ($code, $state) use ($api) {
+        $api['client.session_from_code'] = $api->protect(function ($code, $state, $out_error = null, $out_erro_description = null) use ($api) {
             $context = null;
             $error = '';
             $error_description = '';
@@ -94,10 +94,10 @@ class BlimpClientServiceProvider implements ServiceProviderInterface {
                             $error = 'server_error';
                             $error_description = 'Unknown error. Empty response.';
                         }
-                    } else if (array_key_exists('error', $query)) {
-                        $error = $query['error'];
-                        if (array_key_exists('error_description', $query)) {
-                            $error_description = $query['error_description'];
+                    } else if (!empty($out_error)) {
+                        $error = $out_error;
+                        if (!empty($out_erro_description)) {
+                            $error_description = $out_erro_description;
                         }
                     }
                 } else {
