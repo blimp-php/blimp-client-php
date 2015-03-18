@@ -128,10 +128,11 @@ class BlimpClientServiceProvider implements ServiceProviderInterface {
             return $response['data'];
         });
 
-        $api['client.validate_access_token'] = $api->protect(function ($access_token) use ($api) {
+        $api['client.validate_access_token'] = $api->protect(function ($access_token, $include_entities = false) use ($api) {
             $parameters = [
                 'input_token' => $access_token['access_token'],
-                'redirect_uri' => $api['client.redirect_uri']
+                'redirect_uri' => $api['client.redirect_uri'],
+                'include_entities' => $include_entities
             ];
 
             $auth = [$api['client.client_id'], $api['client.client_secret']];
@@ -284,7 +285,7 @@ class BlimpClientServiceProvider implements ServiceProviderInterface {
                                 ->scalarNode('client_id')->cannotBeEmpty()->end()
                                 ->scalarNode('client_secret')->end()
                                 ->scalarNode('redirect_uri')->end()
-                                ->scalarNode('scope')->cannotBeEmpty()->end()
+                                ->scalarNode('scope')->end()
 
                                 ->variableNode('certificate')->defaultValue(true)->end()
 
