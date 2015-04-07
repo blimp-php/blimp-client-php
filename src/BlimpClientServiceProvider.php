@@ -163,6 +163,8 @@ class BlimpClientServiceProvider implements ServiceProviderInterface {
 
             $headers['User-Agent'] = 'blimp-client-php';
             $headers['Accept-Encoding'] = '*';
+            // TODO Get it from somewhere
+            $headers['Accept-Language'] = 'pt-PT';
 
             if (empty($auth)) {
                 $access_token = $api['client.access_token']();
