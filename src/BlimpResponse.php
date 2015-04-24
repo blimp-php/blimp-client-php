@@ -2,17 +2,17 @@
 namespace Blimp;
 
 class BlimpResponse {
-    private $request;
+    protected $request;
 
-    private $_status;
-    private $_headers;
+    protected $_status;
+    protected $_headers;
 
-    private $_body;
+    protected $_body;
 
-    private $_data;
+    protected $_data;
 
-    private $_etag;
-    private $_etag_hit;
+    protected $_etag;
+    protected $_etag_hit;
 
     public function __construct($request, $status, $headers, $_body, $_etag = null) {
         $this->request = $request;
