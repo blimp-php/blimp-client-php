@@ -2,7 +2,6 @@
     "name": "blimp/blimp-client-php",
     "description": "Blimp PHP Client",
     "keywords": ["blimp", "client"],
-    "version": "0.1.5",
     "type": "library",
     "homepage": "https://github.com/nantunes",
     "license": "GPL",

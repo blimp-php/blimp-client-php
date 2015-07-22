@@ -7,6 +7,7 @@ use Pimple\ServiceProviderInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Psr7\Request;
 
 class BlimpClientServiceProvider implements ServiceProviderInterface {
     public function register(Container $api) {
@@ -23,8 +24,10 @@ class BlimpClientServiceProvider implements ServiceProviderInterface {
 
         $api['client.certificate'] = true;
 
-        $api['client.http_client'] = function () {
-            return new Client();
+        $api['client.http_client'] = function () use ($api) {
+            return new Client([
+                'base_uri' => $api['client.backend_url']
+            ]);
         };
 
         $api['client.access_token'] = $api->protect(function () use ($api) {
@@ -124,7 +127,7 @@ class BlimpClientServiceProvider implements ServiceProviderInterface {
             $auth = [$api['client.client_id'], $api['client.client_secret']];
 
             $response = $api['client.request']('POST', $api['client.token_endpoint'], null, $payload, $auth);
-
+            
             return $response['data'];
         });
 
@@ -153,10 +156,6 @@ class BlimpClientServiceProvider implements ServiceProviderInterface {
                 $parameters = array_merge($parameters, $uri_query);
 
                 $url = $parts[0];
-            }
-
-            if (parse_url($url, PHP_URL_SCHEME) === null) {
-                $url = $api['client.backend_url'] . $url;
             }
 
             $headers = array();
@@ -210,8 +209,8 @@ class BlimpClientServiceProvider implements ServiceProviderInterface {
 
             $options['exceptions'] = false;
 
-            $request = $api['client.http_client']->createRequest($method, $url, $options);
-            $response = $api['client.http_client']->send($request);
+            $request = new Request($method, $url);
+            $response = $api['client.http_client']->send($request, $options);
 
             $response_status = $response->getStatusCode();
             $response_headers = $response->getHeaders();
